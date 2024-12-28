@@ -1,0 +1,92 @@
+#include <Servo.h>
+#include "Wire.h"
+#include "LiquidCrystal_I2C.h"
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
+
+Servo myservo;
+int count = 0;
+int pos = 180; 
+void setup()
+{ 
+  pinMode(16,INPUT);//IR1 pin D0
+  pinMode(0,INPUT);// IR2 pin D3
+  pinMode(2,INPUT);// IR3 pin D4
+  lcd.init();//LCD pin D1 and D2
+  lcd.clear();
+  lcd.backlight();
+  lcd.setCursor (0,0);
+  lcd.print("    ESP8266    ");
+  lcd.setCursor (0,1);
+  lcd.print(" PARKING SYSTEM ");
+  delay(5000);
+//  lcd.setCursor(0, 0);// LCD cursor location in line 1
+//  lcd.print("S0  S1  S2  GATE");
+  pinMode(12,INPUT);//IR Gate pin D6
+
+  myservo.attach(14); // Servo pin D5
+  Serial.begin(115200);
+  myservo.write(180);   // Servo initial position
+}
+void loop()
+{ 
+  lcd.setCursor(0, 0);// LCD cursor location in line 1
+  lcd.print("   WELCOME !  ");
+  lcd.setCursor(0, 1); // LCD cursor location in line 2
+  lcd.print("SLOT EMPTY  : ");
+  count=0; // Count the number of slot occupied
+  if(digitalRead(16) == LOW) // Check the Status of IR1
+  {
+    count+=1;  //Incrimination od occupied slots count
+    Serial.println("IR1");
+////    lcd.print("YES ");//LCD write
+  }
+//  else
+//  {
+//      lcd.print("NO  ");//LCD write
+//  }
+  if(digitalRead(0) ==LOW)// Check the Status of IR2
+  {
+    count+=1;
+        Serial.println("IR2");
+//            lcd.print("YES ");//LCD write
+ }
+//  else
+//  {    lcd.print("NO  ");//LCD write
+//  }
+  if(digitalRead(2) == LOW)// Check the Status of IR3
+  {
+    count+=1;
+ //       lcd.print("YES ");//LCD write
+        Serial.println("IR3");
+  }
+//  else
+//  {    lcd.print("NO  ");//LCD write
+//  }
+       lcd.print(3-count);
+       lcd.print("   ");
+  if(count<3) //Condition to verify if any slot is vacant
+  {      
+    if (digitalRead(12)== LOW )// Check the Status of IR4/IR Gate
+    {
+      Serial.println("IR4");
+      lcd.print("YES ");//LCD write
+      for (pos =180; pos >=0; pos -= 1)
+      { 
+        myservo.write(pos); // Rotate Servo            
+        delay(10);                       
+      }
+      delay(3000); // wait for 3 seconds
+      if (digitalRead(12)== LOW )
+      {        
+          delay(3000);
+       }
+      else{
+      myservo.write(180);   // bring servo to initial position 
+      lcd.print("NO  ");//LCD write
+    }
+    }
+  }
+  myservo.write(180); // bring servo to initial position 
+  lcd.print("NO  "); //LCD write
+  delay(1000);
+}
